@@ -1,6 +1,7 @@
 import type { Plugin } from 'payload'
 
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 import { checkRole } from '@/access/utilities'
 
@@ -28,4 +29,22 @@ export const plugins: Plugin[] = [
       'store-settings': { isGlobal: true },
     },
   }),
+  // Supabase Storage (S3-compatible). Enabled only when the bucket is configured, otherwise media stays on local disk.
+  ...(process.env.S3_BUCKET
+    ? [
+        s3Storage({
+          collections: { media: { generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` } },
+          bucket: process.env.S3_BUCKET,
+          config: {
+            endpoint: process.env.S3_ENDPOINT,
+            region: process.env.S3_REGION || 'us-east-1',
+            forcePathStyle: true,
+            credentials: {
+              accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+              secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+            },
+          },
+        }),
+      ]
+    : []),
 ]

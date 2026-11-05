@@ -225,6 +225,7 @@ export interface Media {
   id: string;
   tenant?: (string | null) | Tenant;
   alt: string;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -907,6 +908,7 @@ export interface PlatformMediaSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

@@ -20,6 +20,7 @@
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts tests/int",
     "seed:maison-sabra": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/maison-sabra.seed.spec.ts",
+    "seed:maison-sabra-media": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/maison-sabra-media.seed.spec.ts",
     "seed:platform": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/platform.seed.spec.ts",
     "import:data": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/import-export.seed.spec.ts",
     "verify:import": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/verify-import.seed.spec.ts"
@@ -30,6 +31,7 @@
     "@payloadcms/next": "3.92.1",
     "@payloadcms/plugin-multi-tenant": "3.92.1",
     "@payloadcms/richtext-lexical": "3.92.1",
+    "@payloadcms/storage-s3": "3.92.1",
     "@payloadcms/translations": "3.92.1",
     "@payloadcms/ui": "3.92.1",
     "@radix-ui/react-accordion": "1.2.11",
