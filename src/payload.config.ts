@@ -67,6 +67,11 @@ export default buildConfig({
     idType: 'uuid',
     pool: {
       connectionString: process.env.DATABASE_URL || '',
+      // Serverless: every instance has its own pool, and Supabase's pooler allows few clients in total.
+      // Keep each instance small and release idle connections fast. Override with DATABASE_POOL_MAX.
+      max: Number(process.env.DATABASE_POOL_MAX) || 2,
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 10_000,
     },
   }),
   editor: lexicalEditor({
