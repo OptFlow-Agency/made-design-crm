@@ -22,8 +22,6 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    // Re-uploading a file replaces it in place instead of creating name-1.ext (keeps the seed idempotent).
-    overwriteExistingFiles: true,
     staticDir: path.resolve(dirname, '../../public/media'),
     // Storefronts serve responsive variants (the Maison Sabra site uses 480 / 800 / 1000 wide).
     imageSizes: [

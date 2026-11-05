@@ -25,12 +25,14 @@ it('seeds Maison Sabra images into storage', async () => {
   for (const m of existing) if (m.filename) byName.set(m.filename.replace(/-\d+(\.\w+)$/, '$1'), m)
   for (const m of existing) if (m.filename) byName.set(m.filename, m)
 
-  let created = 0, updated = 0
+  let created = 0, updated = 0, skipped = 0
   for (const file of originals) {
     const filePath = path.join(dir, file)
     const alt = file.replace(/\.\w+$/, '').replace(/[-_]+/g, ' ')
     const doc = byName.get(file)
     if (doc) {
+      // Already in storage? Skip, otherwise Payload would store a name-1.ext copy.
+      if (doc.url && (await fetch(doc.url, { method: 'HEAD' })).ok) { skipped++; continue }
       await payload.update({ collection: 'media', id: doc.id, data: { alt: doc.alt || alt } as never, filePath, overrideAccess: true })
       updated++
     } else {
@@ -38,5 +40,5 @@ it('seeds Maison Sabra images into storage', async () => {
       created++
     }
   }
-  console.log(`media seeded: ${created} created, ${updated} re-uploaded`)
+  console.log(`media seeded: ${created} created, ${updated} re-uploaded, ${skipped} already present`)
 }, 300_000)
