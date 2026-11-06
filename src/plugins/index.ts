@@ -38,7 +38,11 @@ export const plugins: Plugin[] = [
   ...(process.env.S3_BUCKET
     ? [
         s3Storage({
-          collections: { media: { generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` } },
+          // `platform-media` (the Made Design logos) must be here too: its local folder is gitignored, so on Vercel the files would not exist.
+          collections: {
+            media: { generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` },
+            'platform-media': { prefix: 'platform', generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` },
+          },
           bucket: process.env.S3_BUCKET,
           config: {
             endpoint: process.env.S3_ENDPOINT,
