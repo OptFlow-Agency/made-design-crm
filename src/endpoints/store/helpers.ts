@@ -95,10 +95,10 @@ export const preflight =
     }
   }
 
-/** Cart payload shared by the promo and order endpoints: `[{ slug, qty }]`, 1–30 lines, 1–9 each. */
-export const parseItems = (raw: unknown): { slug: string; qty: number }[] => {
+/** Cart payload shared by the promo and order endpoints: `[{ slug, qty, variant? }]`, 1–30 lines, 1–9 each. */
+export const parseItems = (raw: unknown): { slug: string; qty: number; variant?: string }[] => {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 30) throw new StoreError('invalid_items')
-  const items = raw.map((i) => ({ slug: String(i?.slug ?? ''), qty: Number(i?.qty) }))
+  const items = raw.map((i) => ({ slug: String(i?.slug ?? ''), qty: Number(i?.qty), ...(i?.variant ? { variant: String(i.variant).slice(0, 120) } : {}) }))
   if (items.some((i) => !i.slug || !Number.isInteger(i.qty) || i.qty < 1 || i.qty > 9)) throw new StoreError('invalid_items')
   const perSlug = new Map<string, number>()
   for (const i of items) perSlug.set(i.slug, (perSlug.get(i.slug) ?? 0) + i.qty)

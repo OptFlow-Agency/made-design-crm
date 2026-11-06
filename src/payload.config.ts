@@ -16,6 +16,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from '@/collections/Categories'
+import { ContentSections } from '@/collections/ContentSections'
 import { Customers } from '@/collections/Customers'
 import { Media } from '@/collections/Media'
 import { Offers } from '@/collections/Offers'
@@ -24,6 +25,7 @@ import { Products } from '@/collections/Products'
 import { PromoCodes } from '@/collections/PromoCodes'
 import { Reviews } from '@/collections/Reviews'
 import { ShippingZones } from '@/collections/ShippingZones'
+import { Stories } from '@/collections/Stories'
 import { StoreSettings } from '@/collections/StoreSettings'
 import { PlatformMedia } from '@/collections/PlatformMedia'
 import { Tenants } from '@/collections/Tenants'
@@ -41,9 +43,10 @@ export default buildConfig({
     components: {
       header: ['@/branding/components/TenantTheme#default'],
       beforeLogin: ['@/branding/components/LoginTheme#default'],
-      Nav: '@/branding/components/TenantNav#default',
-      beforeDashboard: ['@/branding/components/TenantDashboardIntro#default'],
-      graphics: { Icon: '@/branding/components/TenantLogo#default', Logo: '@/branding/components/TenantLogo#default' },
+      Nav: '@/admin/nav/AdminNav#default',
+      actions: ['@/admin/nav/HeaderSearch#default'],
+      views: { dashboard: { Component: '@/admin/dashboard/DashboardView#default' } },
+      graphics: { Icon: '@/branding/components/TenantIcon#default', Logo: '@/branding/components/TenantLogo#default' },
     },
   },
   collections: [
@@ -58,6 +61,8 @@ export default buildConfig({
     PromoCodes,
     Offers,
     Reviews,
+    Stories,
+    ContentSections,
     ShippingZones,
     StoreSettings,
   ],
@@ -68,8 +73,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
       // Serverless: every instance has its own pool, and Supabase's pooler allows few clients in total.
-      // Keep each instance small and release idle connections fast. Override with DATABASE_POOL_MAX.
-      max: Number(process.env.DATABASE_POOL_MAX) || 2,
+      // Keep each instance small and release idle connections fast. Override with DATABASE_POOL_MAX. Local dev gets a bigger pool: an admin page fires several queries at once and a save holds a transaction.
+      max: Number(process.env.DATABASE_POOL_MAX) || (process.env.NODE_ENV === 'production' ? 2 : 8),
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 10_000,
     },

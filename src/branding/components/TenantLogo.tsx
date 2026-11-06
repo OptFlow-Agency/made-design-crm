@@ -15,7 +15,7 @@ const TenantLogo = async ({ payload, user }: any) => {
   // Both variants are rendered and swapped with CSS on Payload's own theme attribute (see buildThemeCss).
   return (
     <>
-      <img className="tenant-logo tenant-logo--light" src={light} alt={name} style={style} />
+      <img className={`tenant-logo tenant-logo--light${dark ? ' tenant-logo--has-dark' : ''}`} src={light} alt={name} style={style} />
       {dark && <img className="tenant-logo tenant-logo--dark" src={dark} alt={name} style={style} />}
     </>
   )

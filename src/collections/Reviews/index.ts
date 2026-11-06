@@ -1,12 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
 import { moduleAccess } from '@/access/modules'
+import { idOf } from '@/utilities/ids'
 
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
   access: moduleAccess('reviews', { publicRead: { status: { equals: 'approved' } } }),
   admin: { group: 'Sales', useAsTitle: 'author', defaultColumns: ['author', 'rating', 'product', 'status', 'source'] },
+  hooks: {
+    // Only a linked order can make a review "verified"; the flag can't be ticked by hand.
+    beforeChange: [({ data }) => ({ ...data, verifiedPurchase: Boolean(idOf(data.order)) })],
+  },
   fields: [
+    { name: 'title', type: 'text' },
     { name: 'author', type: 'text', required: true, admin: { description: 'e.g. "Salma B." — first name and initial.' } },
     { name: 'text', type: 'textarea', required: true },
     { name: 'rating', type: 'number', min: 1, max: 5 },
@@ -24,7 +30,8 @@ export const Reviews: CollectionConfig = {
         { label: 'Google', value: 'google' },
       ],
     },
-    { name: 'verifiedPurchase', type: 'checkbox', defaultValue: false },
+    { name: 'verifiedPurchase', type: 'checkbox', defaultValue: false, admin: { readOnly: true, description: 'Set automatically when an order is linked.' } },
+    { name: 'reply', type: 'textarea', admin: { description: 'Public reply from the store.' } },
     {
       name: 'status',
       type: 'select',

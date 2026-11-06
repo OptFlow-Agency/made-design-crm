@@ -13,6 +13,7 @@ const owner = Object.fromEntries(Object.entries(MODULE_COLLECTIONS).flatMap(([m,
 const ALSO_READABLE_BY: Partial<Record<CollectionSlug, TenantModule[]>> = {
   media: MODULES.filter((m) => m !== 'overview'),
   products: ['orders', 'promotions', 'website'],
+  stories: ['products'],
   customers: ['orders'],
   'promo-codes': ['orders'],
   'shipping-zones': ['orders'],

@@ -2,80 +2,81 @@ import type { Endpoint } from 'payload'
 
 import { isValidMoroccanPhone } from '@/utilities/phone'
 import { isPromoUsable, promoDiscount } from '@/utilities/promo'
+import { effectivePrice, findVariant, stockInfo } from '@/utilities/pricing'
 
-import { absoluteUrl, parseItems, preflight, StoreError, storeHandler } from './helpers'
+import { parseItems, preflight, StoreError, storeHandler } from './helpers'
+import { mediaOut, paragraphs, productOut } from './serialize'
 
 const PATH = '/store/:tenant'
 
-/** GET /api/store/:tenant/products[?collection=zman] */
+/** The store-wide low-stock threshold, so "Only N left" follows the same setting everywhere. */
+const storeSettings = async (req: Parameters<typeof products.handler>[0], tenantId: string) =>
+  (await req.payload.find({ collection: 'store-settings', where: { tenant: { equals: tenantId } }, depth: 1, limit: 1, pagination: false, overrideAccess: true })).docs[0]
+
+/** GET /api/store/:tenant/products[?collection=zman][&slug=azerwal][&featured=1] */
 const products: Endpoint = {
   path: `${PATH}/products`,
   method: 'get',
   handler: storeHandler(async ({ req, tenant }) => {
-    const collection = new URL(req.url as string).searchParams.get('collection')
-    const found = await req.payload.find({
-      collection: 'products',
-      where: {
-        and: [
-          { tenant: { equals: tenant.id } },
-          { active: { equals: true } },
-          ...(collection ? [{ 'categories.slug': { equals: collection } }] : []),
-        ],
-      },
-      sort: ['sortOrder', '-createdAt'],
-      depth: 2,
-      pagination: false,
-      overrideAccess: true,
-    })
-
-    const sizesOf = (media: any) => ({
-      ...(media?.sizes?.thumb?.url ? { 480: absoluteUrl(req, media.sizes.thumb.url) } : {}),
-      ...(media?.sizes?.medium?.url ? { 800: absoluteUrl(req, media.sizes.medium.url) } : {}),
-    })
-
-    // Row shape the storefront already consumes (it was written against Supabase's `products` table).
-    return found.docs.map((p) => {
-      const [first, second] = (p.gallery ?? []).map((g) => g.image).filter((m): m is Exclude<typeof m, string> => typeof m === 'object' && m !== null)
-      const cats = (p.categories ?? []).filter((c): c is Exclude<typeof c, string> => typeof c === 'object' && c !== null)
-      return {
-        slug: p.slug,
-        name: p.title,
-        price: p.price,
-        was_price: p.compareAtPrice ?? null,
-        image: absoluteUrl(req, first?.url),
-        image2: absoluteUrl(req, second?.url),
-        image_sizes: sizesOf(first),
-        image2_sizes: sizesOf(second),
-        alt: p.gallery?.[0]?.alt || first?.alt || p.title,
-        description: p.description ?? '',
-        is_new: Boolean(p.isNew),
-        collection: cats[0]?.slug ?? null,
-        collections: cats.map((c) => c.slug),
-        accent_color: p.accentColor ?? null,
-        sort_order: p.sortOrder ?? 0,
-      }
-    })
+    const params = new URL(req.url as string).searchParams
+    const collection = params.get('collection')
+    const slug = params.get('slug')
+    const [found, settings] = await Promise.all([
+      req.payload.find({
+        collection: 'products',
+        where: {
+          and: [
+            { tenant: { equals: tenant.id } },
+            { active: { equals: true } },
+            ...(collection ? [{ 'categories.slug': { equals: collection } }] : []),
+            ...(slug ? [{ slug: { equals: slug } }] : []),
+            ...(params.get('featured') ? [{ featured: { equals: true } }] : []),
+          ],
+        },
+        sort: ['sortOrder', '-createdAt'],
+        depth: 2,
+        pagination: false,
+        overrideAccess: true,
+      }),
+      storeSettings(req, tenant.id),
+    ])
+    return found.docs.map((p) => productOut(req, p, settings?.lowStockThreshold))
   }, 'public, s-maxage=60, stale-while-revalidate=300'),
 }
 
-/** Loads the cart's products and prices them from the catalogue, never from the request. */
-const priceCart = async (req: Parameters<typeof products.handler>[0], tenantId: string, items: { slug: string; qty: number }[]) => {
-  const found = await req.payload.find({
-    collection: 'products',
-    where: { and: [{ tenant: { equals: tenantId } }, { active: { equals: true } }, { slug: { in: [...new Set(items.map((i) => i.slug))] } }] },
-    depth: 0,
-    pagination: false,
-    overrideAccess: true,
-  })
+/** Loads the cart's products and prices them from the catalogue, never from the request. Also refuses unavailable stock. */
+const priceCart = async (req: Parameters<typeof products.handler>[0], tenantId: string, items: { slug: string; qty: number; variant?: string }[]) => {
+  const [found, settings] = await Promise.all([
+    req.payload.find({
+      collection: 'products',
+      where: { and: [{ tenant: { equals: tenantId } }, { active: { equals: true } }, { slug: { in: [...new Set(items.map((i) => i.slug))] } }] },
+      depth: 0,
+      pagination: false,
+      overrideAccess: true,
+    }),
+    storeSettings(req, tenantId),
+  ])
   const bySlug = new Map(found.docs.map((p) => [p.slug, p]))
   if (items.some((i) => !bySlug.has(i.slug))) throw new StoreError('invalid_items')
 
+  const wanted = new Map<string, number>()
   const lines = new Map<string, { product: string; unitPrice: number; quantity: number }>()
   for (const i of items) {
     const p = bySlug.get(i.slug)!
-    const line = lines.get(p.id) ?? { product: p.id, unitPrice: p.price, quantity: 0 }
+    if (i.variant && !findVariant(p, i.variant)) throw new StoreError('invalid_items')
+    const key = `${p.id}\u0000${i.variant ?? ''}`
+    wanted.set(key, (wanted.get(key) ?? 0) + i.qty)
+
+    const line = lines.get(key) ?? { product: p.id, unitPrice: effectivePrice(p, i.variant), quantity: 0 }
     line.quantity += i.qty
-    lines.set(p.id, line)
+    lines.set(key, line)
+  }
+  for (const [key, qty] of wanted) {
+    const [id, variant] = key.split('\u0000')
+    const p = found.docs.find((d) => d.id === id)!
+    const info = stockInfo(p, variant || null, settings?.lowStockThreshold)
+    if (!info.purchasable) throw new StoreError('out_of_stock')
+    if (info.quantity != null && qty > info.quantity) throw new StoreError('insufficient_stock')
   }
   return { lines: [...lines.values()], lastProduct: bySlug.get(items[items.length - 1].slug)!.id, bySlug }
 }
@@ -127,6 +128,8 @@ const orders: Endpoint = {
       phone: text(body?.phone, 40),
       address: text(body?.address),
       city: text(body?.city),
+      ...(text(body?.email, 200) ? { email: text(body?.email, 200) } : {}),
+      ...(text(body?.notes, 500) ? { customerNotes: text(body?.notes, 500) } : {}),
     }
     if (!customer.firstName || !customer.lastName || !customer.address || !customer.city) throw new StoreError('invalid_customer')
     if (!isValidMoroccanPhone(customer.phone)) throw new StoreError('invalid_phone')
@@ -145,7 +148,7 @@ const orders: Endpoint = {
         tenant: tenant.id,
         source: body?.source === 'landing-page' ? 'landing-page' : 'store',
         ...(code ? { promoCode: code.id } : {}),
-        items: items.map((i) => ({ product: bySlug.get(i.slug)!.id, quantity: i.qty })),
+        items: items.map((i) => ({ product: bySlug.get(i.slug)!.id, quantity: i.qty, ...(i.variant ? { variantName: i.variant } : {}) })),
         attribution: {
           landingPage: text(attribution.landingPage, 500) || undefined,
           referrer: text(attribution.referrer, 500) || undefined,
@@ -160,6 +163,195 @@ const orders: Endpoint = {
   }),
 }
 
+/** GET /api/store/:tenant/settings: shipping, payments, returns, trust blocks and tracking ids. */
+const settings: Endpoint = {
+  path: `${PATH}/settings`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const [s, zones] = await Promise.all([
+      storeSettings(req, tenant.id),
+      req.payload.find({ collection: 'shipping-zones', where: { and: [{ tenant: { equals: tenant.id } }, { active: { equals: true } }] }, depth: 0, pagination: false, overrideAccess: true }),
+    ])
+    if (!s) return null
+    return {
+      store_name: s.storeName,
+      tagline: s.tagline ?? null,
+      announcement: s.announcement ?? null,
+      logo: mediaOut(req, s.logo),
+      contact: { phone: s.phone ?? null, whatsapp: s.whatsapp ?? null, email: s.email ?? null, instagram: s.instagram ?? null, facebook: s.facebook ?? null, tiktok: s.tiktok ?? null },
+      shipping: {
+        default_cost: s.defaultShippingCost ?? 0,
+        free_from: s.freeShippingFrom ?? null,
+        delay: s.deliveryDelay ?? null,
+        destinations: (s.shippingDestinations ?? []).map((d) => ({ name: d.name, cost: d.cost ?? null, estimate: d.estimate ?? null, note: d.note ?? null })),
+        zones: zones.docs.map((z) => ({
+          name: z.name,
+          cities: (z.cities ?? []).map((c) => c.city),
+          cost: z.cost,
+          free_above: z.freeAbove ?? s.freeShippingFrom ?? null,
+          estimate: z.estimatedDelivery ?? null,
+          cash_on_delivery: Boolean(z.cashOnDelivery),
+        })),
+      },
+      payment_methods: (s.paymentMethods ?? []).filter((m) => m.enabled !== false).map((m) => ({ key: m.key, label: m.label, description: m.description ?? null, icon: mediaOut(req, m.icon) })),
+      returns: { window_days: s.returns?.windowDays ?? null, summary: s.returns?.summary ?? null, exchange_conditions: s.returns?.exchangeConditions ?? null },
+      trust: (s.trustHighlights ?? []).map((t) => ({ title: t.title, text: t.text ?? null, link_label: t.linkLabel ?? null, link_url: t.linkUrl ?? null })),
+      checkout: { guest: s.checkout?.guestCheckout !== false, ask_email: Boolean(s.checkout?.askEmail), confirmation_message: s.checkout?.confirmationMessage ?? null },
+      low_stock_threshold: s.lowStockThreshold ?? 5,
+      policies: { delivery: s.policies?.delivery ?? null, returns: s.policies?.returns ?? null, terms: s.policies?.terms ?? null, privacy: s.policies?.privacy ?? null },
+      tracking: { meta_pixel: s.metaPixelId ?? null, tiktok_pixel: s.tiktokPixelId ?? null, google_analytics: s.googleAnalyticsId ?? null, events: s.trackedEvents ?? [] },
+    }
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
+/** GET /api/store/:tenant/collections: collections with SEO, featured picks (ordered) and season info. */
+const collections: Endpoint = {
+  path: `${PATH}/collections`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const found = await req.payload.find({
+      collection: 'categories',
+      where: { and: [{ tenant: { equals: tenant.id } }, { active: { equals: true } }] },
+      sort: 'sortOrder',
+      depth: 1,
+      pagination: false,
+      overrideAccess: true,
+    })
+    return found.docs.map((c) => ({
+      slug: c.slug,
+      name: c.title,
+      description: c.description ?? '',
+      image: mediaOut(req, c.image),
+      hero_image: mediaOut(req, c.heroImage),
+      featured: Boolean(c.featured),
+      seasonal: Boolean(c.seasonal),
+      season_label: c.seasonal ? (c.seasonLabel ?? null) : null,
+      featured_products: (c.featuredProducts ?? []).filter((p): p is Exclude<typeof p, string> => typeof p === 'object' && p !== null).map((p) => p.slug),
+      seo: { title: c.seo?.title ?? null, description: c.seo?.description ?? null, title_en: c.seo?.titleEn ?? null, description_en: c.seo?.descriptionEn ?? null },
+    }))
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
+const inWindow = (d: { startsAt?: string | null; endsAt?: string | null }, now = Date.now()) =>
+  !(d.startsAt && new Date(d.startsAt).getTime() > now) && !(d.endsAt && new Date(d.endsAt).getTime() < now)
+
+/** GET /api/store/:tenant/content[?placement=home]: live sections only (published, within their dates), in order. */
+const content: Endpoint = {
+  path: `${PATH}/content`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const placement = new URL(req.url as string).searchParams.get('placement')
+    const found = await req.payload.find({
+      collection: 'content-sections',
+      where: { and: [{ tenant: { equals: tenant.id } }, { active: { equals: true } }, ...(placement ? [{ placement: { in: [placement, 'global'] } }] : [])] },
+      sort: 'sortOrder',
+      depth: 2,
+      pagination: false,
+      overrideAccess: true,
+    })
+    const slugOf = (v: unknown) => (typeof v === 'object' && v ? (v as { slug?: string }).slug : undefined)
+    return found.docs.filter(inWindow).map((c) => ({
+      id: c.id,
+      placement: c.placement,
+      type: c.type,
+      kicker: c.kicker ?? null,
+      heading: c.heading ?? null,
+      body: c.body ?? null,
+      image: mediaOut(req, c.image),
+      image_mobile: mediaOut(req, c.imageMobile),
+      cta: c.cta?.label && c.cta?.href ? { label: c.cta.label, href: c.cta.href } : null,
+      products: (c.products ?? []).map(slugOf).filter(Boolean),
+      collection: slugOf(c.collection) ?? null,
+      story: slugOf(c.story) ?? null,
+      starts_at: c.startsAt ?? null,
+      ends_at: c.endsAt ?? null,
+    }))
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
+/** GET /api/store/:tenant/stories[?slug=][&kind=]: published brand stories. */
+const stories: Endpoint = {
+  path: `${PATH}/stories`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const params = new URL(req.url as string).searchParams
+    const found = await req.payload.find({
+      collection: 'stories',
+      where: {
+        and: [
+          { tenant: { equals: tenant.id } },
+          { active: { equals: true } },
+          ...(params.get('slug') ? [{ slug: { equals: params.get('slug') } }] : []),
+          ...(params.get('kind') ? [{ kind: { equals: params.get('kind') } }] : []),
+        ],
+      },
+      sort: ['sortOrder', '-publishedAt'],
+      depth: 2,
+      pagination: false,
+      overrideAccess: true,
+    })
+    return found.docs
+      .filter((st) => st.kind !== 'craftsmanship' || st.verified)
+      .filter((st) => !st.publishedAt || new Date(st.publishedAt).getTime() <= Date.now())
+      .map((st) => ({
+        slug: st.slug,
+        title: st.title,
+        kind: st.kind,
+        kicker: st.kicker ?? null,
+        excerpt: st.excerpt ?? null,
+        body: paragraphs(st.body),
+        cover: mediaOut(req, st.coverImage),
+        images: (st.images ?? []).map((i) => ({ ...mediaOut(req, i.image, i.alt)!, caption: i.caption ?? null })),
+        products: (st.products ?? []).map((p) => (typeof p === 'object' && p ? p.slug : null)).filter(Boolean),
+        published_at: st.publishedAt ?? null,
+        seo: { title: st.seo?.title ?? null, description: st.seo?.description ?? null, title_en: st.seo?.titleEn ?? null, description_en: st.seo?.descriptionEn ?? null },
+      }))
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
+/** GET /api/store/:tenant/reviews[?product=slug]: approved reviews plus the count and average. */
+const reviews: Endpoint = {
+  path: `${PATH}/reviews`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const product = new URL(req.url as string).searchParams.get('product')
+    const found = await req.payload.find({
+      collection: 'reviews',
+      where: { and: [{ tenant: { equals: tenant.id } }, { status: { equals: 'approved' } }, ...(product ? [{ 'product.slug': { equals: product } }] : [])] },
+      sort: '-createdAt',
+      depth: 1,
+      limit: 50,
+      overrideAccess: true,
+    })
+    const rated = found.docs.filter((r) => r.rating)
+    return {
+      count: rated.length,
+      average: rated.length ? Math.round((rated.reduce((s, r) => s + (r.rating ?? 0), 0) / rated.length) * 10) / 10 : null,
+      reviews: found.docs.map((r) => ({
+        author: r.author,
+        title: r.title ?? null,
+        text: r.text,
+        rating: r.rating ?? null,
+        photo: mediaOut(req, r.photo),
+        verified: Boolean(r.verifiedPurchase),
+        source: r.source,
+        reply: r.reply ?? null,
+        date: r.createdAt,
+      })),
+    }
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
 const options = (name: string): Endpoint => ({ path: `${PATH}/${name}`, method: 'options', handler: preflight() })
 
-export const storeEndpoints: Endpoint[] = [products, promo, orders, options('products'), options('promo'), options('orders')]
+export const storeEndpoints: Endpoint[] = [
+  products,
+  promo,
+  orders,
+  settings,
+  collections,
+  content,
+  stories,
+  reviews,
+  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews'].map(options),
+]

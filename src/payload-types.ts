@@ -78,6 +78,8 @@ export interface Config {
     'promo-codes': PromoCode;
     offers: Offer;
     reviews: Review;
+    stories: Story;
+    'content-sections': ContentSection;
     'shipping-zones': ShippingZone;
     'store-settings': StoreSetting;
     'payload-kv': PayloadKv;
@@ -102,6 +104,8 @@ export interface Config {
     'promo-codes': PromoCodesSelect<false> | PromoCodesSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    stories: StoriesSelect<false> | StoriesSelect<true>;
+    'content-sections': ContentSectionsSelect<false> | ContentSectionsSelect<true>;
     'shipping-zones': ShippingZonesSelect<false> | ShippingZonesSelect<true>;
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -328,6 +332,29 @@ export interface Category {
   slug: string;
   description?: string | null;
   image?: (string | null) | Media;
+  /**
+   * Wide banner for the collection page.
+   */
+  heroImage?: (string | null) | Media;
+  /**
+   * Shown first on the collection page, in this order.
+   */
+  featuredProducts?: (string | Product)[] | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    titleEn?: string | null;
+    descriptionEn?: string | null;
+  };
+  /**
+   * Featured on the homepage.
+   */
+  featured?: boolean | null;
+  seasonal?: boolean | null;
+  /**
+   * e.g. "Été 2027".
+   */
+  seasonLabel?: string | null;
   active?: boolean | null;
   sortOrder?: number | null;
   updatedAt: string;
@@ -349,9 +376,42 @@ export interface Product {
     | {
         image: string | Media;
         /**
-         * Overrides the media alt text.
+         * Overrides the media alt text. Describe what the photo shows.
          */
         alt?: string | null;
+        kind?: ('front' | 'back' | 'side' | 'interior' | 'detail' | 'lifestyle') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * One or two lines shown next to the Add to Cart button.
+   */
+  shortDescription?: string | null;
+  /**
+   * Three to four reasons to choose this model, shown with an icon. Only claim what is true.
+   */
+  benefits?:
+    | {
+        icon?:
+          | (
+              | 'hand'
+              | 'gem'
+              | 'leather'
+              | 'sparkle'
+              | 'bag'
+              | 'chain'
+              | 'palette'
+              | 'heritage'
+              | 'gift'
+              | 'truck'
+              | 'return'
+              | 'shield'
+              | 'heart'
+              | 'ruler'
+            )
+          | null;
+        title: string;
+        description?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -359,6 +419,65 @@ export interface Product {
    * Hex colour echoed behind the product photo, e.g. #a9c1d3.
    */
   accentColor?: string | null;
+  details?: {
+    /**
+     * e.g. "Cuir pleine fleur, tissu berbère rayé, doublure coton".
+     */
+    materials?: string | null;
+    /**
+     * cm
+     */
+    width?: number | null;
+    /**
+     * cm
+     */
+    height?: number | null;
+    /**
+     * cm
+     */
+    depth?: number | null;
+    /**
+     * Strap drop, cm
+     */
+    strapDrop?: number | null;
+    /**
+     * grams
+     */
+    weight?: number | null;
+    /**
+     * Care instructions.
+     */
+    care?: string | null;
+    extra?:
+      | {
+          label: string;
+          value: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Product-specific craft story. Hidden on the storefront until "Claims verified" is ticked.
+   */
+  craftsmanship?: {
+    title?: string | null;
+    /**
+     * Inspiration and making. Separate paragraphs with a blank line.
+     */
+    story?: string | null;
+    /**
+     * Close-up of the material or finish.
+     */
+    image?: (string | null) | Media;
+    /**
+     * Link to a longer brand story.
+     */
+    brandStory?: (string | null) | Story;
+    /**
+     * Tick only once every claim about making, materials and origin has been checked.
+     */
+    claimsVerified?: boolean | null;
+  };
   /**
    * In the store currency. Orders always recompute from this value.
    */
@@ -367,9 +486,31 @@ export interface Product {
    * Crossed-out price. Leave empty when not discounted.
    */
   compareAtPrice?: number | null;
+  /**
+   * A real, dated sale. While live, the sale price replaces the price and the regular price is crossed out.
+   */
+  promotion?: {
+    salePrice?: number | null;
+    /**
+     * Badge text, e.g. "Soldes d'été".
+     */
+    label?: string | null;
+    startsAt?: string | null;
+    endsAt?: string | null;
+  };
   sku?: string | null;
+  /**
+   * Orders are blocked when stock runs out, and stock is deducted automatically.
+   */
   trackInventory?: boolean | null;
+  /**
+   * Ignored when variants carry their own stock.
+   */
   stock?: number | null;
+  /**
+   * Show "Only N left" at or below this. Empty = store default.
+   */
+  lowStockThreshold?: number | null;
   /**
    * Optional sizes / colours when one product has several.
    */
@@ -382,20 +523,97 @@ export interface Product {
          */
         price?: number | null;
         stock?: number | null;
+        /**
+         * Swatch colour, e.g. #a9c1d3.
+         */
+        colorHex?: string | null;
         image?: (string | null) | Media;
+        active?: boolean | null;
         id?: string | null;
       }[]
     | null;
   seo?: {
+    /**
+     * French meta title (about 60 characters).
+     */
     title?: string | null;
+    /**
+     * French meta description (about 155 characters).
+     */
     description?: string | null;
+    titleEn?: string | null;
+    descriptionEn?: string | null;
+    /**
+     * Defaults to the first gallery image.
+     */
+    image?: (string | null) | Media;
+    /**
+     * Only if this page duplicates another URL.
+     */
+    canonicalUrl?: string | null;
+    noIndex?: boolean | null;
   };
   slug: string;
   categories?: (string | Category)[] | null;
   active?: boolean | null;
   isNew?: boolean | null;
+  /**
+   * Shown in featured selections.
+   */
+  featured?: boolean | null;
   sortOrder?: number | null;
   relatedProducts?: (string | Product)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories".
+ */
+export interface Story {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  title: string;
+  slug: string;
+  kind: 'craftsmanship' | 'inspiration' | 'editorial' | 'brand';
+  /**
+   * Short label above the title.
+   */
+  kicker?: string | null;
+  excerpt?: string | null;
+  /**
+   * Separate paragraphs with a blank line.
+   */
+  body?: string | null;
+  coverImage?: (string | null) | Media;
+  images?:
+    | {
+        image: string | Media;
+        caption?: string | null;
+        alt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Products this story is about.
+   */
+  products?: (string | Product)[] | null;
+  /**
+   * Claims about making, materials and origin have been checked. Required to publish craftsmanship stories.
+   */
+  verified?: boolean | null;
+  publishedAt?: string | null;
+  /**
+   * Published.
+   */
+  active?: boolean | null;
+  sortOrder?: number | null;
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    titleEn?: string | null;
+    descriptionEn?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -585,6 +803,7 @@ export interface Offer {
 export interface Review {
   id: string;
   tenant?: (string | null) | Tenant;
+  title?: string | null;
   /**
    * e.g. "Salma B." — first name and initial.
    */
@@ -598,8 +817,62 @@ export interface Review {
    */
   order?: (string | null) | Order;
   source?: ('site' | 'instagram' | 'whatsapp' | 'google') | null;
+  /**
+   * Set automatically when an order is linked.
+   */
   verifiedPurchase?: boolean | null;
+  /**
+   * Public reply from the store.
+   */
+  reply?: string | null;
   status: 'pending' | 'approved' | 'hidden';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-sections".
+ */
+export interface ContentSection {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  /**
+   * Internal name, not shown to visitors.
+   */
+  name: string;
+  placement: 'home' | 'shop' | 'collection' | 'product' | 'checkout' | 'global';
+  type: 'hero' | 'banner' | 'cta' | 'text' | 'announcement' | 'featured-products' | 'story';
+  kicker?: string | null;
+  heading?: string | null;
+  body?: string | null;
+  image?: (string | null) | Media;
+  /**
+   * Optional portrait crop for phones.
+   */
+  imageMobile?: (string | null) | Media;
+  cta?: {
+    label?: string | null;
+    /**
+     * Path ("/boutique") or full URL.
+     */
+    href?: string | null;
+  };
+  products?: (string | Product)[] | null;
+  collection?: (string | null) | Category;
+  story?: (string | null) | Story;
+  /**
+   * Empty = live immediately.
+   */
+  startsAt?: string | null;
+  /**
+   * Empty = never ends.
+   */
+  endsAt?: string | null;
+  /**
+   * Untick to hide without deleting.
+   */
+  active?: boolean | null;
+  sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -671,9 +944,96 @@ export interface StoreSetting {
    * e.g. "2 à 4 jours ouvrés selon la ville".
    */
   deliveryDelay?: string | null;
+  /**
+   * Countries / areas you deliver to, shown on product pages. City prices come from Shipping zones.
+   */
+  shippingDestinations?:
+    | {
+        name: string;
+        cost?: number | null;
+        /**
+         * e.g. "5 à 8 jours".
+         */
+        estimate?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Show "Only N left" when real stock is at or below this (products can override it).
+   */
+  lowStockThreshold?: number | null;
+  /**
+   * Shown on product pages and at checkout. List only what you really accept.
+   */
+  paymentMethods?:
+    | {
+        label: string;
+        key: 'cod' | 'bank-transfer' | 'card' | 'other';
+        description?: string | null;
+        icon?: (string | null) | Media;
+        enabled?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  returns?: {
+    /**
+     * Days after delivery to request a return or exchange.
+     */
+    windowDays?: number | null;
+    /**
+     * Short, plain-language conditions shown on product pages.
+     */
+    summary?: string | null;
+    exchangeConditions?: string | null;
+  };
+  /**
+   * Short reassurance blocks (delivery, returns, support). Only verified facts.
+   */
+  trustHighlights?:
+    | {
+        title: string;
+        text?: string | null;
+        linkLabel?: string | null;
+        linkUrl?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  checkout?: {
+    /**
+     * No account required.
+     */
+    guestCheckout?: boolean | null;
+    /**
+     * Show an optional email field (for the order confirmation).
+     */
+    askEmail?: boolean | null;
+    /**
+     * What happens after the order is placed.
+     */
+    confirmationMessage?: string | null;
+    /**
+     * Receives a notification for every new order.
+     */
+    notifyEmail?: string | null;
+  };
   metaPixelId?: string | null;
   tiktokPixelId?: string | null;
   googleAnalyticsId?: string | null;
+  /**
+   * Events the storefront should send to the pixels above.
+   */
+  trackedEvents?:
+    | (
+        | 'product_view'
+        | 'variant_select'
+        | 'add_to_cart'
+        | 'remove_from_cart'
+        | 'begin_checkout'
+        | 'purchase'
+        | 'promo_code'
+      )[]
+    | null;
   policies?: {
     delivery?: string | null;
     returns?: string | null;
@@ -750,6 +1110,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reviews';
         value: string | Review;
+      } | null)
+    | ({
+        relationTo: 'stories';
+        value: string | Story;
+      } | null)
+    | ({
+        relationTo: 'content-sections';
+        value: string | ContentSection;
       } | null)
     | ({
         relationTo: 'shipping-zones';
@@ -955,6 +1323,19 @@ export interface CategoriesSelect<T extends boolean = true> {
   slug?: T;
   description?: T;
   image?: T;
+  heroImage?: T;
+  featuredProducts?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        titleEn?: T;
+        descriptionEn?: T;
+      };
+  featured?: T;
+  seasonal?: T;
+  seasonLabel?: T;
   active?: T;
   sortOrder?: T;
   updatedAt?: T;
@@ -973,14 +1354,60 @@ export interface ProductsSelect<T extends boolean = true> {
     | {
         image?: T;
         alt?: T;
+        kind?: T;
+        id?: T;
+      };
+  shortDescription?: T;
+  benefits?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        description?: T;
         id?: T;
       };
   accentColor?: T;
+  details?:
+    | T
+    | {
+        materials?: T;
+        width?: T;
+        height?: T;
+        depth?: T;
+        strapDrop?: T;
+        weight?: T;
+        care?: T;
+        extra?:
+          | T
+          | {
+              label?: T;
+              value?: T;
+              id?: T;
+            };
+      };
+  craftsmanship?:
+    | T
+    | {
+        title?: T;
+        story?: T;
+        image?: T;
+        brandStory?: T;
+        claimsVerified?: T;
+      };
   price?: T;
   compareAtPrice?: T;
+  promotion?:
+    | T
+    | {
+        salePrice?: T;
+        label?: T;
+        startsAt?: T;
+        endsAt?: T;
+      };
   sku?: T;
   trackInventory?: T;
   stock?: T;
+  lowStockThreshold?: T;
   variants?:
     | T
     | {
@@ -988,7 +1415,9 @@ export interface ProductsSelect<T extends boolean = true> {
         sku?: T;
         price?: T;
         stock?: T;
+        colorHex?: T;
         image?: T;
+        active?: T;
         id?: T;
       };
   seo?:
@@ -996,11 +1425,17 @@ export interface ProductsSelect<T extends boolean = true> {
     | {
         title?: T;
         description?: T;
+        titleEn?: T;
+        descriptionEn?: T;
+        image?: T;
+        canonicalUrl?: T;
+        noIndex?: T;
       };
   slug?: T;
   categories?: T;
   active?: T;
   isNew?: T;
+  featured?: T;
   sortOrder?: T;
   relatedProducts?: T;
   updatedAt?: T;
@@ -1145,6 +1580,7 @@ export interface OffersSelect<T extends boolean = true> {
  */
 export interface ReviewsSelect<T extends boolean = true> {
   tenant?: T;
+  title?: T;
   author?: T;
   text?: T;
   rating?: T;
@@ -1153,7 +1589,75 @@ export interface ReviewsSelect<T extends boolean = true> {
   order?: T;
   source?: T;
   verifiedPurchase?: T;
+  reply?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories_select".
+ */
+export interface StoriesSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  slug?: T;
+  kind?: T;
+  kicker?: T;
+  excerpt?: T;
+  body?: T;
+  coverImage?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        alt?: T;
+        id?: T;
+      };
+  products?: T;
+  verified?: T;
+  publishedAt?: T;
+  active?: T;
+  sortOrder?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        titleEn?: T;
+        descriptionEn?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-sections_select".
+ */
+export interface ContentSectionsSelect<T extends boolean = true> {
+  tenant?: T;
+  name?: T;
+  placement?: T;
+  type?: T;
+  kicker?: T;
+  heading?: T;
+  body?: T;
+  image?: T;
+  imageMobile?: T;
+  cta?:
+    | T
+    | {
+        label?: T;
+        href?: T;
+      };
+  products?: T;
+  collection?: T;
+  story?: T;
+  startsAt?: T;
+  endsAt?: T;
+  active?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1199,9 +1703,54 @@ export interface StoreSettingsSelect<T extends boolean = true> {
   defaultShippingCost?: T;
   freeShippingFrom?: T;
   deliveryDelay?: T;
+  shippingDestinations?:
+    | T
+    | {
+        name?: T;
+        cost?: T;
+        estimate?: T;
+        note?: T;
+        id?: T;
+      };
+  lowStockThreshold?: T;
+  paymentMethods?:
+    | T
+    | {
+        label?: T;
+        key?: T;
+        description?: T;
+        icon?: T;
+        enabled?: T;
+        id?: T;
+      };
+  returns?:
+    | T
+    | {
+        windowDays?: T;
+        summary?: T;
+        exchangeConditions?: T;
+      };
+  trustHighlights?:
+    | T
+    | {
+        title?: T;
+        text?: T;
+        linkLabel?: T;
+        linkUrl?: T;
+        id?: T;
+      };
+  checkout?:
+    | T
+    | {
+        guestCheckout?: T;
+        askEmail?: T;
+        confirmationMessage?: T;
+        notifyEmail?: T;
+      };
   metaPixelId?: T;
   tiktokPixelId?: T;
   googleAnalyticsId?: T;
+  trackedEvents?: T;
   policies?:
     | T
     | {

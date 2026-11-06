@@ -4,6 +4,7 @@ import { APIError } from 'payload'
 
 import { idOf } from '@/utilities/ids'
 import { normalizePhone } from '@/utilities/phone'
+import { effectivePrice, findVariant, stockInfo } from '@/utilities/pricing'
 import { isPromoUsable, promoDiscount } from '@/utilities/promo'
 
 
@@ -40,11 +41,11 @@ export const prepareOrder: CollectionBeforeChangeHook = async ({ data, operation
     for (const item of items) {
       const product = await payload.findByID({ collection: 'products', id: idOf(item.product) as string, depth: 1, req })
       if (!product.active) throw new APIError(`${product.title} is no longer available`, 400)
-      const variant = item.variantName ? product.variants?.find((v) => v.name === item.variantName) : undefined
+      if (item.variantName && !findVariant(product, item.variantName)) throw new APIError(`${product.title}: unknown option "${item.variantName}"`, 400)
       const firstImage = product.gallery?.[0]?.image
       item.productName = product.title
       item.productImage = typeof firstImage === 'object' && firstImage ? firstImage.url : item.productImage
-      item.unitPrice = variant?.price ?? product.price
+      item.unitPrice = effectivePrice(product, item.variantName)
       item.quantity = Math.max(1, Math.floor(Number(item.quantity) || 1))
     }
 
@@ -59,6 +60,17 @@ export const prepareOrder: CollectionBeforeChangeHook = async ({ data, operation
       else merged.push(item)
     }
     items = data.items = merged
+
+    // 2b. Stock: refuse lines that exceed real availability (only for products that track inventory).
+    const settings = tenant
+      ? await payload.find({ collection: 'store-settings', where: { tenant: { equals: tenant } }, depth: 0, limit: 1, req })
+      : undefined
+    for (const item of items) {
+      const product = await payload.findByID({ collection: 'products', id: idOf(item.product) as string, depth: 0, req })
+      const info = stockInfo(product, item.variantName, settings?.docs[0]?.lowStockThreshold)
+      if (!info.purchasable) throw new APIError(`out_of_stock:${product.title}`, 400)
+      if (info.quantity != null && item.quantity > info.quantity) throw new APIError(`insufficient_stock:${product.title}:${info.quantity}`, 400)
+    }
   }
 
   // 3. Line totals + subtotal.

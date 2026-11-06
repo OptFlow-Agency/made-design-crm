@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { moduleAccess } from '@/access/modules'
 
+import { adjustStock } from './hooks/adjustStock'
 import { prepareOrder } from './hooks/prepareOrder'
 import { linkCustomer, refreshCustomerStats } from './hooks/syncCustomer'
 import { trackStatus } from './hooks/trackStatus'
@@ -30,7 +31,7 @@ export const Orders: CollectionConfig = {
   defaultSort: '-createdAt',
   hooks: {
     beforeChange: [prepareOrder, linkCustomer, trackStatus],
-    afterChange: [refreshCustomerStats],
+    afterChange: [refreshCustomerStats, adjustStock],
   },
   fields: [
     { name: 'orderNumber', type: 'number', index: true, admin: { readOnly: true, position: 'sidebar' } },

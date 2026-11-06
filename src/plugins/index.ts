@@ -13,6 +13,9 @@ import { checkRole } from '@/access/utilities'
 export const plugins: Plugin[] = [
   multiTenantPlugin({
     tenantsSlug: 'tenants',
+    // The Tenants list is the agency's directory of stores: platform admins must see every store there, not just the selected one.
+    // Store admins stay limited to their own store by the plugin's access constraint (useTenantsCollectionAccess).
+    useTenantsListFilter: false,
     // The memberships field is declared on Users (`tenants`), so it can be hidden from the form for everyone but platform admins.
     tenantsArrayField: { includeDefaultField: false },
     userHasAccessToAllTenants: (user) => checkRole(['admin'], user as never),
@@ -25,6 +28,8 @@ export const plugins: Plugin[] = [
       'promo-codes': {},
       offers: {},
       reviews: {},
+      stories: {},
+      'content-sections': {},
       'shipping-zones': {},
       'store-settings': { isGlobal: true },
     },

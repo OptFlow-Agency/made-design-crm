@@ -46,6 +46,10 @@ export type ResolvedTheme = {
   radius: string
   headingStack: string
   bodyStack: string
+  /** Body font if it is a sans-serif (fit for dense UI), otherwise null and the interface uses Inter. */
+  uiStack: string | null
+  /** Display serifs run small; this scales brand headings up so they hold their weight. */
+  headingAdjust: number
   googleFamilies: string[]
   defaultTheme: 'light' | 'dark' | 'system'
 }
@@ -80,6 +84,8 @@ export function resolveTheme(branding: TenantBranding | null | undefined): Resol
     radius: RADIUS_OPTIONS.find((r) => r.value === branding?.appearance?.borderRadius)?.value ?? '8px',
     headingStack: heading.stack,
     bodyStack: body.stack,
+    uiStack: body.value !== 'system' && body.stack.endsWith('sans-serif') ? body.stack : null,
+    headingAdjust: heading.stack.endsWith('sans-serif') ? 1 : 1.3,
     googleFamilies: [...new Set(families)],
     defaultTheme: branding?.appearance?.defaultTheme ?? 'system',
   }
@@ -112,23 +118,21 @@ const palette = (p: ResolvedTheme['light']) => `
 export function buildThemeCss(theme: ResolvedTheme): string {
   return `
 :root{${palette(theme.light)}
-  --font-body:${theme.bodyStack};--font-serif:${theme.headingStack};
   --style-radius-s:calc(${theme.radius} * .5);--style-radius-m:${theme.radius};--style-radius-l:calc(${theme.radius} * 1.5);
-  --tenant-heading-font:${theme.headingStack};}
+  --tenant-heading-font:${theme.headingStack};--tenant-body-font:${theme.bodyStack};--tenant-heading-adjust:${theme.headingAdjust};${theme.uiStack ? `--tenant-ui-font:${theme.uiStack};` : ''}}
 html[data-theme='dark']{${palette(theme.dark)}}
-h1,h2,h3,.doc-header__title,.dashboard h1{font-family:var(--tenant-heading-font)}
 .btn--style-primary{background:var(--tenant-primary);border-color:var(--tenant-primary);color:var(--tenant-on-primary)}
 .btn--style-primary:hover:not(.btn--disabled){background:color-mix(in srgb,var(--tenant-primary) 88%,var(--tenant-foreground));border-color:transparent}
 .btn--style-primary svg .stroke,.btn--style-primary svg path{stroke:currentColor}
-a:not(.btn):not(.nav__link):not(.card__title):hover{color:var(--tenant-accent-text)}
-.nav__link.active,.nav__link:hover{color:var(--tenant-accent-text)}
-.nav__link.active::before{background:var(--tenant-accent)}
+a:not(.btn):not(.ds-link):not(.ds-btn):not(.card__title):hover{color:var(--tenant-primary)}
 .tenant-logo--dark{display:none}
+html[data-theme='dark'] .tenant-logo--has-dark{display:none}
 html[data-theme='dark'] .tenant-logo--dark{display:inline}
-html[data-theme='dark'] .tenant-logo--dark ~ *,html[data-theme='dark'] .tenant-logo--light:has(+ .tenant-logo--dark){display:none}
-:focus-visible{outline:2px solid var(--tenant-accent);outline-offset:2px}
+:focus-visible{outline:2px solid var(--tenant-primary);outline-offset:2px}
 `.replace(/\s*\n\s*/g, '\n').trim()
 }
 
+/** The interface font (Inter) is always loaded; tenant fonts are added for brand moments only. */
+const UI_FONT = 'Inter:wght@400;450;500;600;700'
 export const googleFontsHref = (theme: ResolvedTheme) =>
-  theme.googleFamilies.length ? `https://fonts.googleapis.com/css2?${theme.googleFamilies.map((f) => `family=${f}`).join('&')}&display=swap` : null
+  `https://fonts.googleapis.com/css2?${[UI_FONT, ...theme.googleFamilies.filter((f) => !f.startsWith('Inter:'))].map((f) => `family=${f}`).join('&')}&display=swap`
