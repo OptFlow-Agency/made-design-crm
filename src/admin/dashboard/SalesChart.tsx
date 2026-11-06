@@ -106,11 +106,14 @@ export const SalesChart: React.FC<{ series: Day[]; currency: string }> = ({ seri
         )}
       </div>
 
-      <table className="visually-hidden">
-        <caption>Daily revenue and orders</caption>
-        <thead><tr><th>Date</th><th>Revenue</th><th>Orders</th></tr></thead>
-        <tbody>{series.map((d) => <tr key={d.date}><td>{d.date}</td><td>{money.format(d.revenue)}</td><td>{d.orders}</td></tr>)}</tbody>
-      </table>
+      {/* The clipping has to sit on a div: browsers ignore overflow/size limits on a bare <table>, and its rows would stretch the page. */}
+      <div className="visually-hidden">
+        <table>
+          <caption>Daily revenue and orders</caption>
+          <thead><tr><th>Date</th><th>Revenue</th><th>Orders</th></tr></thead>
+          <tbody>{series.map((d) => <tr key={d.date}><td>{d.date}</td><td>{money.format(d.revenue)}</td><td>{d.orders}</td></tr>)}</tbody>
+        </table>
+      </div>
     </div>
   )
 }
