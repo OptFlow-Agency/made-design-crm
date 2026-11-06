@@ -1,8 +1,10 @@
 'use client'
 import type { TextFieldClientProps } from 'payload'
 
-import { FieldLabel, useConfig, useField, useFormFields } from '@payloadcms/ui'
-import React, { useEffect, useState } from 'react'
+import { FieldLabel, useField, useFormFields } from '@payloadcms/ui'
+import React, { useState } from 'react'
+
+import { useProductImage } from './useProductImage'
 
 /**
  * Read-only product picture for an order line.
@@ -11,26 +13,10 @@ import React, { useEffect, useState } from 'react'
  */
 export const ItemImage: React.FC<TextFieldClientProps> = ({ field, path }) => {
   const { value: snapshot } = useField<string>({ path: path ?? field.name })
-  const { config } = useConfig()
   const productPath = (path ?? field.name).replace(/productImage$/, 'product')
-  const productId = useFormFields(([fields]) => fields[productPath]?.value) as string | undefined
-
-  const [current, setCurrent] = useState<string | null>(null)
+  const productId = useFormFields(([fields]) => fields[productPath]?.value)
+  const current = useProductImage(productId)
   const [failed, setFailed] = useState<string[]>([])
-
-  useEffect(() => {
-    setCurrent(null)
-    if (!productId || typeof productId !== 'string') return
-    const controller = new AbortController()
-    fetch(`${config.routes.api}/products/${productId}?depth=2&select[gallery]=true`, { credentials: 'include', signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((doc) => {
-        const image = doc?.gallery?.[0]?.image
-        setCurrent(image && typeof image === 'object' ? (image.sizes?.thumb?.url ?? image.url ?? null) : null)
-      })
-      .catch(() => {})
-    return () => controller.abort()
-  }, [productId, config.routes.api])
 
   const src = [current, snapshot].find((u): u is string => Boolean(u) && !failed.includes(u as string))
 
