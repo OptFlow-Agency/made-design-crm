@@ -269,6 +269,54 @@ const content: Endpoint = {
   }, 'public, s-maxage=60, stale-while-revalidate=300'),
 }
 
+/**
+ * GET /api/store/:tenant/offers: active bundle offers with the promo code that prices them.
+ * The code is exposed on purpose (the storefront sends it to /promo and /orders, which stay authoritative);
+ * only offers whose code is itself usable right now are returned, so an expired or exhausted code hides its offer.
+ */
+const eligibleSlugs = (offer: string[], code: string[]) => (!offer.length ? code : !code.length ? offer : offer.filter((x) => code.includes(x)))
+
+const offers: Endpoint = {
+  path: `${PATH}/offers`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const found = await req.payload.find({
+      collection: 'offers',
+      where: { and: [{ tenant: { equals: tenant.id } }, { active: { equals: true } }] },
+      sort: 'sortOrder',
+      depth: 1,
+      pagination: false,
+      overrideAccess: true,
+    })
+    const slugOf = (v: unknown) => (typeof v === 'object' && v ? (v as { slug?: string }).slug : undefined)
+    return found.docs.flatMap((o) => {
+      const code = typeof o.promoCode === 'object' && o.promoCode ? o.promoCode : null
+      if (!code || !isPromoUsable(code, Number.POSITIVE_INFINITY)) return []
+      const offerSlugs = (o.products ?? []).map(slugOf).filter(Boolean) as string[]
+      const codeSlugs = (code.products ?? []).map(slugOf).filter(Boolean) as string[]
+      // Eligible = in the offer's list AND the code's list (empty means "any"). /promo only discounts the code's products.
+      const products = eligibleSlugs(offerSlugs, codeSlugs)
+      // Two restricted lists with nothing in common: the offer can't apply to anything, so it is not offered.
+      if (!products.length && offerSlugs.length && codeSlugs.length) return []
+      return [{
+        id: o.id,
+        title: o.title,
+        type: o.type,
+        quantity: o.quantity ?? 1,
+        percent: code.percent,
+        code: code.code,
+        second_item_only: Boolean(code.secondItemOnly),
+        min_subtotal: code.minSubtotal ?? null,
+        badge: o.badge ?? null,
+        default_selected: Boolean(o.defaultSelected),
+        duration_seconds: o.durationSeconds ?? null,
+        products,
+        ends_at: code.endsAt ?? null,
+      }]
+    })
+  }, 'public, s-maxage=30, stale-while-revalidate=60'),
+}
+
 /** GET /api/store/:tenant/stories[?slug=][&kind=]: published brand stories. */
 const stories: Endpoint = {
   path: `${PATH}/stories`,
@@ -353,5 +401,6 @@ export const storeEndpoints: Endpoint[] = [
   content,
   stories,
   reviews,
-  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews'].map(options),
+  offers,
+  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews', 'offers'].map(options),
 ]

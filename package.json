@@ -20,6 +20,7 @@
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts tests/int",
     "seed:maison-sabra": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/maison-sabra.seed.spec.ts",
+    "seed:maison-sabra-benefits": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/maison-sabra-benefits.seed.spec.ts",
     "seed:maison-sabra-media": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/maison-sabra-media.seed.spec.ts",
     "seed:platform": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/platform.seed.spec.ts",
     "import:data": "cross-env NODE_OPTIONS=--no-deprecation vitest run tests/seed/import-export.seed.spec.ts",
