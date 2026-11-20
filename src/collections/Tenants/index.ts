@@ -10,6 +10,7 @@ import { slugify } from '@/utilities/slugify'
 const TENANT_SCOPED: CollectionSlug[] = [
   'orders',
   'reviews',
+  'testimonials',
   'offers',
   'promo-codes',
   'shipping-zones',

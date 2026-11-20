@@ -390,6 +390,34 @@ const reviews: Endpoint = {
   }, 'public, s-maxage=60, stale-while-revalidate=300'),
 }
 
+/** GET /api/store/:tenant/testimonials[?featured=1]: published customer quotes, in order. */
+const testimonials: Endpoint = {
+  path: `${PATH}/testimonials`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const params = new URL(req.url as string).searchParams
+    const found = await req.payload.find({
+      collection: 'testimonials',
+      where: { and: [{ tenant: { equals: tenant.id } }, { active: { equals: true } }, ...(params.get('featured') ? [{ featured: { equals: true } }] : [])] },
+      sort: ['sortOrder', '-createdAt'],
+      depth: 1,
+      pagination: false,
+      overrideAccess: true,
+    })
+    return found.docs.map((t) => ({
+      author: t.author,
+      role: t.role ?? null,
+      address: t.address ?? null,
+      quote: t.quote,
+      rating: t.rating ?? null,
+      photo: mediaOut(req, t.photo),
+      link: t.link ?? null,
+      featured: Boolean(t.featured),
+      date: t.createdAt,
+    }))
+  }, 'public, s-maxage=60, stale-while-revalidate=300'),
+}
+
 const options = (name: string): Endpoint => ({ path: `${PATH}/${name}`, method: 'options', handler: preflight() })
 
 export const storeEndpoints: Endpoint[] = [
@@ -401,6 +429,7 @@ export const storeEndpoints: Endpoint[] = [
   content,
   stories,
   reviews,
+  testimonials,
   offers,
-  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews', 'offers'].map(options),
+  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews', 'testimonials', 'offers'].map(options),
 ]

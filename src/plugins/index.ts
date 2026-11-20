@@ -29,6 +29,7 @@ export const plugins: Plugin[] = [
       offers: {},
       reviews: {},
       stories: {},
+      testimonials: {},
       'content-sections': {},
       'shipping-zones': {},
       'store-settings': { isGlobal: true },

@@ -13,7 +13,7 @@ export const MODULE_COLLECTIONS: Record<Exclude<TenantModule, 'overview'>, Colle
   orders: ['orders'],
   customers: ['customers'],
   promotions: ['promo-codes'],
-  website: ['offers', 'reviews', 'stories', 'content-sections'],
+  website: ['offers', 'reviews', 'testimonials', 'stories', 'content-sections'],
   media: ['media'],
   settings: ['store-settings', 'shipping-zones'],
 }

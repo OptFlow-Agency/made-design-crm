@@ -7,7 +7,7 @@
 
 export type IconName =
   | 'layout-dashboard' | 'package' | 'tags' | 'boxes' | 'shopping-cart' | 'users' | 'ticket' | 'percent'
-  | 'star' | 'book-open' | 'layout-template' | 'images' | 'store' | 'truck' | 'building' | 'user-cog'
+  | 'star' | 'quote' | 'book-open' | 'layout-template' | 'images' | 'store' | 'truck' | 'building' | 'user-cog'
   | 'sliders' | 'folder' | 'shield'
 
 export type NavLinkItem = {
@@ -57,6 +57,7 @@ export const SECTION_DEFS: { key: string; label: string; items: Def[] }[] = [
       { slug: 'content-sections', kind: 'collection', icon: 'layout-template' },
       { slug: 'stories', kind: 'collection', icon: 'book-open' },
       { slug: 'reviews', kind: 'collection', icon: 'star' },
+      { slug: 'testimonials', kind: 'collection', icon: 'quote' },
       { slug: 'media', kind: 'collection', icon: 'images' },
     ],
   },

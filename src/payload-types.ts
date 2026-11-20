@@ -79,6 +79,7 @@ export interface Config {
     offers: Offer;
     reviews: Review;
     stories: Story;
+    testimonials: Testimonial;
     'content-sections': ContentSection;
     'shipping-zones': ShippingZone;
     'store-settings': StoreSetting;
@@ -105,6 +106,7 @@ export interface Config {
     offers: OffersSelect<false> | OffersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     stories: StoriesSelect<false> | StoriesSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'content-sections': ContentSectionsSelect<false> | ContentSectionsSelect<true>;
     'shipping-zones': ShippingZonesSelect<false> | ShippingZonesSelect<true>;
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
@@ -229,7 +231,6 @@ export interface Media {
   id: string;
   tenant?: (string | null) | Tenant;
   alt: string;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -309,8 +310,6 @@ export interface User {
 export interface PlatformMedia {
   id: string;
   alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -833,6 +832,47 @@ export interface Review {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  /**
+   * e.g. "Salma B." — first name and initial.
+   */
+  author: string;
+  /**
+   * Optional line under the name: a city, a job or "Verified customer".
+   */
+  role?: string | null;
+  /**
+   * Where the customer lives or ships to (city, region...). Shown only if the storefront chooses to.
+   */
+  address?: string | null;
+  quote: string;
+  rating?: number | null;
+  /**
+   * Portrait of the customer, or a photo of their order.
+   */
+  photo?: (string | null) | Media;
+  /**
+   * Optional link to the original post (Instagram, Google...).
+   */
+  link?: string | null;
+  /**
+   * Highlight on the home page.
+   */
+  featured?: boolean | null;
+  /**
+   * Published on the storefront.
+   */
+  active?: boolean | null;
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "content-sections".
  */
 export interface ContentSection {
@@ -1118,6 +1158,10 @@ export interface PayloadLockedDocument {
         value: string | Story;
       } | null)
     | ({
+        relationTo: 'testimonials';
+        value: string | Testimonial;
+      } | null)
+    | ({
         relationTo: 'content-sections';
         value: string | ContentSection;
       } | null)
@@ -1259,8 +1303,6 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface PlatformMediaSelect<T extends boolean = true> {
   alt?: T;
-  prefix?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1280,7 +1322,6 @@ export interface PlatformMediaSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1632,6 +1673,25 @@ export interface StoriesSelect<T extends boolean = true> {
         titleEn?: T;
         descriptionEn?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  tenant?: T;
+  author?: T;
+  role?: T;
+  address?: T;
+  quote?: T;
+  rating?: T;
+  photo?: T;
+  link?: T;
+  featured?: T;
+  active?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }

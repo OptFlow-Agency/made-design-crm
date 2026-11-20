@@ -27,6 +27,7 @@ import { Reviews } from '@/collections/Reviews'
 import { ShippingZones } from '@/collections/ShippingZones'
 import { Stories } from '@/collections/Stories'
 import { StoreSettings } from '@/collections/StoreSettings'
+import { Testimonials } from '@/collections/Testimonials'
 import { PlatformMedia } from '@/collections/PlatformMedia'
 import { Tenants } from '@/collections/Tenants'
 import { Users } from '@/collections/Users'
@@ -62,6 +63,7 @@ export default buildConfig({
     Offers,
     Reviews,
     Stories,
+    Testimonials,
     ContentSections,
     ShippingZones,
     StoreSettings,

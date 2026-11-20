@@ -2,7 +2,7 @@
 import { Link, useNav } from '@payloadcms/ui'
 import {
   BookOpen, Boxes, Building2, ChevronDown, FolderClosed, Images, LayoutDashboard, LayoutTemplate, type LucideIcon,
-  PanelLeftClose, PanelLeftOpen, Package, Percent, Search, ShoppingCart, SlidersHorizontal, Star, Store, Tags, Ticket,
+  PanelLeftClose, PanelLeftOpen, Package, Percent, Quote, Search, ShoppingCart, SlidersHorizontal, Star, Store, Tags, Ticket,
   Truck, UserCog, Users, X,
 } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation.js'
@@ -14,7 +14,7 @@ import type { IconName, NavLinkItem, NavSectionModel } from './navModel'
 
 const ICONS: Record<IconName, LucideIcon> = {
   'layout-dashboard': LayoutDashboard, package: Package, tags: Tags, boxes: Boxes, 'shopping-cart': ShoppingCart, users: Users,
-  ticket: Ticket, percent: Percent, star: Star, 'book-open': BookOpen, 'layout-template': LayoutTemplate, images: Images,
+  ticket: Ticket, percent: Percent, star: Star, quote: Quote, 'book-open': BookOpen, 'layout-template': LayoutTemplate, images: Images,
   store: Store, truck: Truck, building: Building2, 'user-cog': UserCog, sliders: SlidersHorizontal, folder: FolderClosed, shield: UserCog,
 }
 
