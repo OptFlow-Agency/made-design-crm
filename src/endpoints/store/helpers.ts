@@ -47,10 +47,27 @@ const allowedOrigins = (tenant: Tenant): string[] => {
   return [...(domain ? [`https://${domain}`, `https://www.${domain}`] : []), ...dev]
 }
 
+/**
+ * A storefront hosted on Vercel (`<project>.vercel.app`) also gets preview deployments at
+ * `<project>-<branch or hash>-<team>.vercel.app`; those may call the API too.
+ */
+const isVercelPreview = (tenant: Tenant, origin: string): boolean => {
+  const project = tenant.domain?.trim().match(/^([a-z0-9-]+)\.vercel\.app$/i)?.[1]
+  if (!project) return false
+  try {
+    const { protocol, hostname } = new URL(origin)
+    return protocol === 'https:' && hostname.endsWith('.vercel.app') && hostname.startsWith(`${project.toLowerCase()}-`)
+  } catch {
+    return false
+  }
+}
+
+const isAllowedOrigin = (tenant: Tenant, origin: string) => allowedOrigins(tenant).includes(origin) || isVercelPreview(tenant, origin)
+
 const corsHeaders = (req: PayloadRequest, tenant?: Tenant): Record<string, string> => {
   const origin = req.headers.get('origin')
   const base: Record<string, string> = { Vary: 'Origin' }
-  if (origin && tenant && allowedOrigins(tenant).includes(origin)) {
+  if (origin && tenant && isAllowedOrigin(tenant, origin)) {
     base['Access-Control-Allow-Origin'] = origin
     base['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     base['Access-Control-Allow-Headers'] = 'Content-Type'
@@ -72,7 +89,7 @@ export const storeHandler =
     try {
       tenant = await resolveTenant(req)
       const origin = req.headers.get('origin')
-      if (origin && !allowedOrigins(tenant).includes(origin)) throw new StoreError('origin_not_allowed', 403)
+      if (origin && !isAllowedOrigin(tenant, origin)) throw new StoreError('origin_not_allowed', 403)
 
       const body = await handler({ req, tenant })
       return Response.json(body, { headers: { ...corsHeaders(req, tenant), ...(cache ? { 'Cache-Control': cache } : {}) } })

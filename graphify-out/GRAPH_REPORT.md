@@ -1,16 +1,16 @@
 # Graph Report - made-design-crm  (2026-11-23)
 
 ## Corpus Check
-- 132 files · ~330,375 words
+- 134 files · ~345,603 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 956 nodes · 1372 edges · 50 communities (44 shown, 6 thin omitted)
+- 959 nodes · 1375 edges · 46 communities (40 shown, 6 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.6)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5e9d4384`
+- Built from commit: `725021ae`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,10 +44,7 @@
 - [[_COMMUNITY_index.ts|index.ts]]
 - [[_COMMUNITY_Payload CMS Querying Reference|Payload CMS Querying Reference]]
 - [[_COMMUNITY_Payload CMS Adapters Reference|Payload CMS Adapters Reference]]
-- [[_COMMUNITY_Payload CMS Collections Reference|Payload CMS Collections Reference]]
 - [[_COMMUNITY_admin.e2e.spec.ts|admin.e2e.spec.ts]]
-- [[_COMMUNITY_Storage Adapters|Storage Adapters]]
-- [[_COMMUNITY_Payload CMS Hooks Reference|Payload CMS Hooks Reference]]
 - [[_COMMUNITY_route.ts|route.ts]]
 - [[_COMMUNITY_next.config.ts|next.config.ts]]
 - [[_COMMUNITY_eslint.config.mjs|eslint.config.mjs]]
@@ -73,6 +70,8 @@
 10. `getActiveBranding()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `SalesChart()` --calls--> `pick()`  [INFERRED]
+  src/admin/dashboard/SalesChart.tsx → src/branding/theme.ts
 - `adminOrSelf()` --calls--> `checkRole()`  [EXTRACTED]
   src/access/adminOrSelf.ts → src/access/utilities.ts
 - `isAdmin()` --calls--> `checkRole()`  [EXTRACTED]
@@ -81,29 +80,27 @@
   src/access/manageStaff.ts → src/utilities/ids.ts
 - `DashboardView()` --calls--> `canRead()`  [EXTRACTED]
   src/admin/dashboard/DashboardView.tsx → src/access/modules.ts
-- `DashboardView()` --calls--> `canWrite()`  [EXTRACTED]
-  src/admin/dashboard/DashboardView.tsx → src/access/modules.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (50 total, 6 thin omitted)
+## Communities (46 total, 6 thin omitted)
 
 ### Community 0 - "index.ts"
 Cohesion: 0.07
 Nodes (48): prepareOrder(), absoluteUrl(), allowedOrigins(), corsHeaders(), Handler, parseItems(), preflight(), resolveTenant() (+40 more)
 
 ### Community 1 - "checkRole"
-Cohesion: 0.09
-Nodes (32): adminOnly(), adminOnlyFieldAccess(), adminOrSelf(), adminOrStoreAdminFieldAccess(), isAdmin(), isStaff(), canCreateStaff(), deleteStaff() (+24 more)
+Cohesion: 0.08
+Nodes (37): adminOnly(), adminOnlyFieldAccess(), adminOrSelf(), adminOrStoreAdminFieldAccess(), isAdmin(), isStaff(), canCreateStaff(), deleteStaff() (+29 more)
 
 ### Community 2 - "payload-types.ts"
 Cohesion: 0.04
-Nodes (47): Auth, CategoriesSelect, Category, CollectionsWidget, Config, ContentSection, ContentSectionsSelect, Customer (+39 more)
+Nodes (45): Auth, CategoriesSelect, Category, CollectionsWidget, Config, ContentSection, ContentSectionsSelect, Customer (+37 more)
 
 ### Community 3 - "theme.ts"
 Cohesion: 0.10
-Nodes (37): getActiveBranding(), getActiveTenant(), LoginTheme(), TenantLogo(), url(), TenantTheme(), ThemeStyle(), COLOR_KEYS (+29 more)
+Nodes (35): getActiveBranding(), getActiveTenant(), LoginTheme(), TenantLogo(), url(), TenantTheme(), ThemeStyle(), COLOR_KEYS (+27 more)
 
 ### Community 4 - "DashboardView.tsx"
 Cohesion: 0.08
@@ -138,7 +135,7 @@ Cohesion: 0.06
 Nodes (32): Capability Guards, Common Patterns, Container Type Switching, Data Guards, fieldAffectsData, fieldHasMaxDepth, fieldHasSubFields, fieldIsArrayType (+24 more)
 
 ### Community 12 - "importMap.js"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (12): importMap, Args, Args, Args, TenantIcon(), ItemImage(), Item, ItemRowLabel() (+4 more)
 
 ### Community 13 - "Payload Custom API Endpoints Reference"
@@ -167,14 +164,14 @@ Nodes (26): 1. Local API Access Control (CRITICAL), 2. Transaction Failures in H
 
 ### Community 19 - "payload.config.ts"
 Cohesion: 0.09
-Nodes (10): GET, ShippingZones, Testimonials, Users, dirname, filename, plugins, DEFAULT_BENEFITS (+2 more)
+Nodes (9): GET, ContentSections, StoreSettings, dirname, filename, plugins, DEFAULT_BENEFITS, TESTIMONIALS (+1 more)
 
 ### Community 20 - "Payload CMS Field Types Reference"
 Cohesion: 0.09
 Nodes (22): Advanced Lexical Configuration, Array, Blocks, Collapsible (Layout), Conditional Fields, Field Type Guards, Geospatial Queries, Join Fields (+14 more)
 
 ### Community 21 - "AdminNav.tsx"
-Cohesion: 0.15
+Cohesion: 0.13
 Nodes (16): AdminNav(), media(), ROLE_LABEL(), AGENCY_ONLY, Def, IconName, NavLinkItem, NavSectionModel (+8 more)
 
 ### Community 22 - "modules.ts"
@@ -194,28 +191,16 @@ Cohesion: 0.14
 Nodes (13): aliases, components, utils, rsc, $schema, style, tailwind, baseColor (+5 more)
 
 ### Community 27 - "Payload CMS Querying Reference"
-Cohesion: 0.18
-Nodes (11): Access Control in Local API, AND/OR Logic, GraphQL, Local API, Nested Properties, Payload CMS Querying Reference, Performance Best Practices, Query Operators (+3 more)
+Cohesion: 0.06
+Nodes (27): Auth Collection, Basic Collection, Document Status, Draft API Usage, Globals, Live Preview, Payload CMS Collections Reference, Upload Collection (+19 more)
 
 ### Community 29 - "Payload CMS Adapters Reference"
-Cohesion: 0.20
-Nodes (10): Database Adapters, Email Adapters, MongoDB, Nodemailer (SMTP), Payload CMS Adapters Reference, Postgres, Resend, SQLite (+2 more)
-
-### Community 30 - "Payload CMS Collections Reference"
-Cohesion: 0.20
-Nodes (9): Auth Collection, Basic Collection, Document Status, Draft API Usage, Globals, Live Preview, Payload CMS Collections Reference, Upload Collection (+1 more)
+Cohesion: 0.12
+Nodes (17): AWS S3, Azure Blob Storage, Cloudflare R2, Database Adapters, Email Adapters, Google Cloud Storage, MongoDB, Nodemailer (SMTP) (+9 more)
 
 ### Community 31 - "admin.e2e.spec.ts"
 Cohesion: 0.39
 Nodes (5): login(), LoginOptions, cleanupTestUser(), seedTestUser(), testUser
-
-### Community 32 - "Storage Adapters"
-Cohesion: 0.29
-Nodes (7): AWS S3, Azure Blob Storage, Cloudflare R2, Google Cloud Storage, Storage Adapters, Uploadthing, Vercel Blob
-
-### Community 33 - "Payload CMS Hooks Reference"
-Cohesion: 0.29
-Nodes (7): Collection Hooks, Date Field Auto-Set, Field Hooks, Hook Context, Hook Patterns Best Practices, Next.js Revalidation with Context Control, Payload CMS Hooks Reference
 
 ### Community 34 - "route.ts"
 Cohesion: 0.29
@@ -251,15 +236,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Payload Plugin Development` connect `Payload Plugin Development` to `Advanced Patterns`?**
   _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Why does `Payload CMS Access Control Reference` connect `Payload CMS Access Control Reference` to `SKILL.md`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **Why does `Payload CMS Access Control - Advanced Patterns` connect `Payload CMS Access Control - Advanced Patterns` to `SKILL.md`?**
+- **Why does `Payload CMS Access Control Reference` connect `Payload CMS Access Control Reference` to `Payload CMS Querying Reference`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `Payload CMS Access Control - Advanced Patterns` connect `Payload CMS Access Control - Advanced Patterns` to `Payload CMS Querying Reference`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **What connects `singleQuote`, `trailingComma`, `printWidth` to the rest of the system?**
   _537 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `index.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._
 - **Should `checkRole` be split into smaller, more focused modules?**
-  _Cohesion score 0.09042553191489362 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08106219426974144 - nodes in this community are weakly interconnected._
 - **Should `payload-types.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._

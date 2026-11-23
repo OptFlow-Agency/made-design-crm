@@ -420,32 +420,32 @@
     "semantic_hash": ""
   },
   "src/migrations/20261123_210000_storage_object_key.json": {
-    "mtime": 1795465862.323761,
+    "mtime": 1795466054.043366,
     "ast_hash": "5938ddb04f333b7cf9495d053e0d7814",
     "semantic_hash": ""
   },
   "src/migrations/20261123_210000_storage_object_key.ts": {
-    "mtime": 1795465862.2970285,
+    "mtime": 1795466054.043525,
     "ast_hash": "79585a72d882f7626c2eff641b8ff8de",
     "semantic_hash": ""
   },
   "src/migrations/index.ts": {
-    "mtime": 1795465862.3243566,
-    "ast_hash": "4822551e4f7a9d4c08220980c1bdc3e9",
+    "mtime": 1795466364.1840498,
+    "ast_hash": "c1199eb30fbef003b8a2ccaf40d6bf01",
     "semantic_hash": ""
   },
   "src/payload-types.ts": {
-    "mtime": 1795465942.3052883,
+    "mtime": 1795466054.043907,
     "ast_hash": "c3fdb6dbdba5d812bd3896d10d0d18b2",
     "semantic_hash": ""
   },
   "src/payload.config.ts": {
-    "mtime": 1795465862.1292653,
+    "mtime": 1795466054.0441027,
     "ast_hash": "fecd9ec26c495afdb11767ee2e095a87",
     "semantic_hash": ""
   },
   "src/plugins/index.ts": {
-    "mtime": 1795465834.8500628,
+    "mtime": 1795466054.044279,
     "ast_hash": "26002a22aac28af8788f72e5e74b3cbd",
     "semantic_hash": ""
   },
@@ -952,6 +952,16 @@
   "tests/seed/platform-logo.svg": {
     "mtime": 1793828551.8221705,
     "ast_hash": "f471b99abfcda707a3e1bd13c5215b62",
+    "semantic_hash": ""
+  },
+  "src/migrations/20261123_210100_media_prefix.json": {
+    "mtime": 1795466337.5435424,
+    "ast_hash": "d5e9abf477aa08ea366d64b5074a9a25",
+    "semantic_hash": ""
+  },
+  "src/migrations/20261123_210100_media_prefix.ts": {
+    "mtime": 1795466350.4810007,
+    "ast_hash": "5c10a4e14f3df5dfdc85c6eb747259f5",
     "semantic_hash": ""
   }
 }

@@ -95,7 +95,7 @@ export const Tenants: CollectionConfig = {
       type: 'text',
       unique: true,
       index: true,
-      admin: { description: 'Public storefront domain, e.g. `maisonsabra.ma`. Used to resolve the tenant.' },
+      admin: { description: 'Public storefront host, without https:// (e.g. `maisonssabra.vercel.app`). Only this site may call the store API from a browser; for a `*.vercel.app` host its preview deployments are allowed too.' },
     },
     {
       name: 'status',
