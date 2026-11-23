@@ -165,7 +165,7 @@ export interface Tenant {
    */
   slug: string;
   /**
-   * Public storefront domain, e.g. `maisonsabra.ma`. Used to resolve the tenant.
+   * Public storefront host, without https:// (e.g. `maisonssabra.vercel.app`). Only this site may call the store API from a browser; for a `*.vercel.app` host its preview deployments are allowed too.
    */
   domain?: string | null;
   status: 'active' | 'onboarding' | 'suspended';
