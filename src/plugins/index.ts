@@ -36,25 +36,34 @@ export const plugins: Plugin[] = [
     },
   }),
   // Supabase Storage (S3-compatible). Enabled only when the bucket is configured, otherwise media stays on local disk.
-  ...(process.env.S3_BUCKET
-    ? [
-        s3Storage({
-          // `platform-media` (the Made Design logos) must be here too: its local folder is gitignored, so on Vercel the files would not exist.
-          collections: {
-            media: { generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` },
-            'platform-media': { prefix: 'platform', generateFileURL: ({ filename, prefix }) => `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}` },
-          },
-          bucket: process.env.S3_BUCKET,
-          config: {
-            endpoint: process.env.S3_ENDPOINT,
-            region: process.env.S3_REGION || 'us-east-1',
-            forcePathStyle: true,
-            credentials: {
-              accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-              secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
-            },
-          },
-        }),
-      ]
-    : []),
+  // Always registered so the schema is identical with or without a bucket: `alwaysInsertFields` keeps the
+  // plugin's `_objectKey` column on `media` even when storage is disabled (local dev without S3 vars).
+  // Registering it conditionally made the schema depend on env vars, and a dev push from a machine
+  // without S3_BUCKET dropped `media._objectkey` from the shared database, breaking every media query in production.
+  s3Storage({
+    enabled: Boolean(process.env.S3_BUCKET),
+    alwaysInsertFields: true,
+    // `platform-media` (the Made Design logos) must be here too: its local folder is gitignored, so on Vercel the files would not exist.
+    collections: {
+      media: {
+        generateFileURL: ({ filename, prefix }) =>
+          `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}`,
+      },
+      'platform-media': {
+        prefix: 'platform',
+        generateFileURL: ({ filename, prefix }) =>
+          `${process.env.S3_PUBLIC_URL}/${[prefix, filename].filter(Boolean).join('/')}`,
+      },
+    },
+    bucket: process.env.S3_BUCKET || '',
+    config: {
+      endpoint: process.env.S3_ENDPOINT,
+      region: process.env.S3_REGION || 'us-east-1',
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+      },
+    },
+  }),
 ]

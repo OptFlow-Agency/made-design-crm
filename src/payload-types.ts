@@ -231,6 +231,8 @@ export interface Media {
   id: string;
   tenant?: (string | null) | Tenant;
   alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -310,6 +312,8 @@ export interface User {
 export interface PlatformMedia {
   id: string;
   alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1303,6 +1307,8 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface PlatformMediaSelect<T extends boolean = true> {
   alt?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1322,6 +1328,8 @@ export interface PlatformMediaSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

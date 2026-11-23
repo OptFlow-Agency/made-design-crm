@@ -72,6 +72,10 @@ export default buildConfig({
   db: postgresAdapter({
     // UUID primary keys on every table (ids are strings throughout the code).
     idType: 'uuid',
+    // Never let `next dev` push schema changes: local dev points at the same Supabase database as production,
+    // so a push from a differently-configured machine silently drops columns there. Schema changes go through
+    // migrations only (`pnpm payload migrate:create`, applied by `payload migrate` in `vercel-build`).
+    push: false,
     pool: {
       connectionString: process.env.DATABASE_URL || '',
       // Serverless: every instance has its own pool, and Supabase's pooler allows few clients in total.
