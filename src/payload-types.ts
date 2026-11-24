@@ -757,6 +757,10 @@ export interface PromoCode {
    */
   usageLimit?: number | null;
   usageCount?: number | null;
+  /**
+   * Display this code and its percentage on the product pages it applies to. Unticked codes stay private.
+   */
+  showOnProduct?: boolean | null;
   active?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -1602,6 +1606,7 @@ export interface PromoCodesSelect<T extends boolean = true> {
   endsAt?: T;
   usageLimit?: T;
   usageCount?: T;
+  showOnProduct?: T;
   active?: T;
   updatedAt?: T;
   createdAt?: T;

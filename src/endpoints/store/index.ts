@@ -317,6 +317,36 @@ const offers: Endpoint = {
   }, 'public, s-maxage=30, stale-while-revalidate=60'),
 }
 
+/**
+ * GET /api/store/:tenant/promos: the promo codes the team chose to advertise (showOnProduct), with their percentage
+ * and the products they cover. Codes without the flag are never listed, so private codes can't be scraped.
+ * Same usability rule as /offers; /promo and /orders stay authoritative for the actual discount.
+ */
+const promos: Endpoint = {
+  path: `${PATH}/promos`,
+  method: 'get',
+  handler: storeHandler(async ({ req, tenant }) => {
+    const found = await req.payload.find({
+      collection: 'promo-codes',
+      where: { and: [{ tenant: { equals: tenant.id } }, { showOnProduct: { equals: true } }, { active: { equals: true } }] },
+      depth: 1,
+      pagination: false,
+      overrideAccess: true,
+    })
+    const slugOf = (v: unknown) => (typeof v === 'object' && v ? (v as { slug?: string }).slug : undefined)
+    return found.docs
+      .filter((c) => isPromoUsable(c, Number.POSITIVE_INFINITY))
+      .map((c) => ({
+        code: c.code,
+        percent: c.percent,
+        second_item_only: Boolean(c.secondItemOnly),
+        min_subtotal: c.minSubtotal ?? null,
+        ends_at: c.endsAt ?? null,
+        products: (c.products ?? []).map(slugOf).filter(Boolean) as string[],
+      }))
+  }, 'public, s-maxage=30, stale-while-revalidate=60'),
+}
+
 /** GET /api/store/:tenant/stories[?slug=][&kind=]: published brand stories. */
 const stories: Endpoint = {
   path: `${PATH}/stories`,
@@ -431,5 +461,6 @@ export const storeEndpoints: Endpoint[] = [
   reviews,
   testimonials,
   offers,
-  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews', 'testimonials', 'offers'].map(options),
+  promos,
+  ...['products', 'promo', 'orders', 'settings', 'collections', 'content', 'stories', 'reviews', 'testimonials', 'offers', 'promos'].map(options),
 ]

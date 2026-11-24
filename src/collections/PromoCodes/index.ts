@@ -11,7 +11,7 @@ export const PromoCodes: CollectionConfig = {
   admin: {
     group: 'Sales',
     useAsTitle: 'code',
-    defaultColumns: ['code', 'percent', 'secondItemOnly', 'active', 'usageCount'],
+    defaultColumns: ['code', 'percent', 'secondItemOnly', 'showOnProduct', 'active', 'usageCount'],
   },
   fields: [
     {
@@ -47,6 +47,15 @@ export const PromoCodes: CollectionConfig = {
     },
     { name: 'usageLimit', type: 'number', min: 1, admin: { description: 'Empty = unlimited.' } },
     { name: 'usageCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
+    {
+      name: 'showOnProduct',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Display this code and its percentage on the product pages it applies to. Unticked codes stay private.',
+      },
+    },
     { name: 'active', type: 'checkbox', defaultValue: true, admin: { position: 'sidebar' } },
   ],
 }
